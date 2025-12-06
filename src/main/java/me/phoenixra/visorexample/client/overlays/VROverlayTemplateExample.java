@@ -1,12 +1,12 @@
 package me.phoenixra.visorexample.client.overlays;
 
 import me.phoenixra.atumvr.api.misc.color.AtumColor;
-import me.phoenixra.visor.api.client.data.PoseAnchor;
-import me.phoenixra.visor.api.client.gui.overlay.template.RegisterVROverlayTemplate;
-import me.phoenixra.visor.api.client.gui.overlay.template.framework.VROverlayTemplateScreen;
-import me.phoenixra.visor.api.client.gui.overlay.template.options.OverlayOptions;
-import me.phoenixra.visor.api.client.gui.overlay.template.options.types.OverlayOptionsGlobal;
-import me.phoenixra.visor.api.client.gui.overlay.template.options.types.OverlayOptionsLocation;
+import me.phoenixra.visor.api.client.gui.overlays.RegisterVROverlayTemplate;
+import me.phoenixra.visor.api.client.gui.overlays.framework.template.VROverlayTemplateScreen;
+import me.phoenixra.visor.api.client.gui.overlays.options.OverlayOptionGroup;
+import me.phoenixra.visor.api.client.gui.overlays.options.types.OverlayOptionsMisc;
+import me.phoenixra.visor.api.client.gui.overlays.options.types.OverlayOptionsPose;
+import me.phoenixra.visor.api.client.player.pose.PoseAnchor;
 import me.phoenixra.visor.api.common.addon.VisorAddon;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -14,9 +14,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-@RegisterVROverlayTemplate(id = VROverlayTemplateExample.ID)
+@RegisterVROverlayTemplate(
+        id = VROverlayTemplateExample.ID,
+        name = VROverlayTemplateExample.NAME,
+        description = VROverlayTemplateExample.DESCRIPTION
+)
 public class VROverlayTemplateExample extends VROverlayTemplateScreen {
     public static final String ID = "template_example";
+    public static final String NAME = "Example template";
+    public static final String DESCRIPTION = "Example description";
 
     private final Component text = Component.literal("Template Overlay Example");
 
@@ -24,6 +30,7 @@ public class VROverlayTemplateExample extends VROverlayTemplateScreen {
         super(owner, id);
         //if you want it to be enabled once created
         setEnabled(true);
+
     }
 
     @Override
@@ -38,30 +45,30 @@ public class VROverlayTemplateExample extends VROverlayTemplateScreen {
         return true;
     }
 
-
     @Override
-    protected @NotNull List<OverlayOptions> createOptions() {
+    protected @NotNull List<OverlayOptionGroup<?>> createTemplateOptions() {
         return List.of(
-                new OverlayOptionsGlobal(
+                new OverlayOptionsMisc(
                         this,
                         it->{
-                            it.setUpdateOptionsType(OverlayOptionsGlobal.UpdateOptionsType.TICK);
-                            it.setFormulaOverlayScale("1.0");
+                            it.setOptionsUpdaterType(OverlayOptionsMisc.OptionsUpdaterType.TICK);
                         }
                 ),
-                new OverlayOptionsLocation(
+                new OverlayOptionsPose(
                         this,
                         it->{
-                            it.setTickModelView(true);
-                            it.setAimRotation(false);
+                            it.setTickPose(true);
+                            it.setAimedRotation(false);
                             it.setPositionAnchor(PoseAnchor.HMD);
-                            it.setFormulaPosX(null);
-                            it.setFormulaPosY("-0.1");
-                            it.setFormulaPosZ("-1.2");
+                            it.setPositionOffsetX(0);
+                            it.setPositionOffsetY(-0.1f);
+                            it.setPositionOffsetZ(-1.2f);
                             it.setRotationAnchor(PoseAnchor.HMD);
-                            it.setFormulaRotationX(null);
-                            it.setFormulaRotationY(null);
-                            it.setFormulaRotationZ(null);
+                            it.setRotationOffsetX(0);
+                            it.setRotationOffsetY(0);
+                            it.setRotationOffsetZ(0);
+
+                            it.setScale(1.0f);
                         }
 
                 )

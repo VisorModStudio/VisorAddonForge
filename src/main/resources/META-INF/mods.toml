@@ -16,7 +16,7 @@ The Example Addon for Visor
 [[dependencies.visor_example]]
 modId = "visor"
 mandatory = true
-versionRange = "[0.1.0-alpha,)"
+versionRange = "[0.2.0-alpha,)"
 ordering = "AFTER"
 side = "BOTH"
 
