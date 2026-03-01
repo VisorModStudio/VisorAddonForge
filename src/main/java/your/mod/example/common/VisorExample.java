@@ -1,4 +1,4 @@
-package me.phoenixra.visorexample.common;
+package your.mod.example.common;
 
 public class VisorExample {
     public static final String MOD_ID = "visor_example";

@@ -13,7 +13,7 @@ jetbrains   = "23.0.0"
 minecraft        = "1.20.1"
 forge            = "47.4.0"
 parchment        = '2023.09.03'
-visorApi               = "0.2.0"
+visorApi         = "0.3.0snapshot-7"
 
 
 [plugins]

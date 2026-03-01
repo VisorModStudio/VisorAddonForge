@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.forgeParchment)
 }
 
-group = 'me.phoenixra'
+group = 'your.mod'
 version = '1.0.0-SNAPSHOT'
 
 minecraft {
@@ -22,8 +22,14 @@ repositories {
 dependencies {
     minecraft "net.minecraftforge:forge:"+libs.versions.minecraft.get()+"-"+libs.versions.forge.get()
 
-    compileOnly fg.deobf(libs.visorApi)
 
+    // ---- LOCAL DEPENDENCY
+    //compileOnly fg.deobf(fileTree(dir: 'libs', include: '*.jar'))
+    // ----
+
+    // ---- EXTERNAL DEPENDENCY
+    compileOnly fg.deobf(libs.visorApi)
+    // ----
 
     compileOnly libs.bundles.annotations
     annotationProcessor libs.bundles.annotations
