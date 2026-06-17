@@ -1,8 +1,6 @@
 package your.mod.example.client;
 
-import org.vmstudio.visor.api.VisorAPI;
 import org.vmstudio.visor.api.common.addon.VisorAddon;
-import your.mod.example.client.overlays.VROverlayExample;
 import your.mod.example.common.VisorExample;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
@@ -12,17 +10,12 @@ import java.util.List;
 
 public class ExampleAddonClient implements VisorAddon {
     @Override
+    public void onAddonRegister() {
+
+    }
+
+    @Override
     public void onAddonLoad() {
-        VisorAPI.addonManager().getRegistries()
-                .overlays()
-                .registerComponents(
-                        List.of(
-                                new VROverlayExample(
-                                        this,
-                                        VROverlayExample.ID
-                                )
-                        )
-                );
     }
 
     @Override
