@@ -1,79 +1,98 @@
 plugins {
-    id 'java'
-    alias(libs.plugins.shadow)
-    alias(libs.plugins.forgeGradle)
-    alias(libs.plugins.forgeParchment)
+    id "dev.architectury.loom" version "1.17.493" apply false
 }
 
-group = 'your.mod'
-version = '1.0.0-SNAPSHOT'
-
-minecraft {
-    mappings channel: 'parchment', version: libs.versions.parchment.get()+"-"+libs.versions.minecraft.get()
+apply from: "gradle/minecraft.gradle"
+if (switchingTarget) {
+    return
 }
+
+def minecraftAtLeast = { String version ->
+    def (a, b) = [minecraft_version, version].collect { it.tokenize(".")*.toInteger() }
+    def diff = (0..<Math.max(a.size(), b.size())).collect { (a[it] ?: 0) <=> (b[it] ?: 0) }.find { it != 0 }
+    diff == null || diff > 0
+}
+
+// For Unobfuscated Minecraft from 26.1
+def unobfuscated = minecraftAtLeast("26.1")
+apply plugin: unobfuscated ? "dev.architectury.loom-no-remap" : "dev.architectury.loom"
+
+if (unobfuscated) {
+    // The mod* configurations of the remapping Loom, so the dependencies read the same on every version
+    ["Api", "Implementation", "CompileOnly", "RuntimeOnly", "LocalRuntime"].each { bucket ->
+        def plain = configurations.findByName(bucket.uncapitalize())
+        if (plain != null && configurations.findByName("mod${bucket}") == null) {
+            plain.extendsFrom(configurations.create("mod${bucket}") { canBeConsumed = false; canBeResolved = false })
+        }
+    }
+}
+
+group = mod_group
+version = "${mod_version}+mc${minecraft_version}-forge"
+base.archivesName = mod_name
+
+// The Visor API marks client-only code with fabric-loader's @Environment: the annotation, not the loader
+configurations {
+    fabricAnnotations { canBeConsumed = false; canBeResolved = true; transitive = false }
+}
+sourceSets.main.compileClasspath += configurations.fabricAnnotations
 
 repositories {
-    mavenCentral()
-    maven { url = 'https://maven.minecraftforge.net/' }
-    maven { url = 'https://jitpack.io' }
-
+    maven { name = "Forge"; url = "https://maven.minecraftforge.net/" }
+    maven { name = "Fabric"; url = "https://maven.fabricmc.net/" }
+    maven { name = "Parchment"; url = "https://maven.parchmentmc.org" }
+    exclusiveContent {
+        forRepository { maven { name = "Modrinth"; url = "https://api.modrinth.com/maven" } }
+        filter { includeGroup "maven.modrinth" }
+    }
 }
 
+def parchmentVersion = findProperty("parchment_version")
 dependencies {
-    minecraft "net.minecraftforge:forge:"+libs.versions.minecraft.get()+"-"+libs.versions.forge.get()
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    if (!unobfuscated) {
+        mappings loom.layered {
+            officialMojangMappings()
+            if (parchmentVersion) {
+                parchment("org.parchmentmc.data:parchment-${minecraft_version}:${parchmentVersion}@zip")
+            }
+        }
+    }
+    forge "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
+    modCompileOnly "maven.modrinth:visor:${visor_version}+mc${minecraft_version}-forge:api"
+    modLocalRuntime "maven.modrinth:visor:${visor_version}+mc${minecraft_version}-forge"
+    localRuntime "io.github.llamalad7:mixinextras-forge:${mixin_extras_version}"
 
-    // ---- LOCAL DEPENDENCY
-    //compileOnly fg.deobf(fileTree(dir: 'libs', include: '*.jar'))
-    // ----
-
-    // ---- EXTERNAL DEPENDENCY
-    compileOnly fg.deobf(libs.visorApi)
-    // ----
-
-    compileOnly libs.bundles.annotations
-    annotationProcessor libs.bundles.annotations
+    fabricAnnotations "net.fabricmc:fabric-loader:0.16.14"
+    compileOnly "org.jetbrains:annotations:26.1.0"
+    compileOnly "org.projectlombok:lombok:1.18.46"
+    annotationProcessor "org.projectlombok:lombok:1.18.46"
 }
 
+def javaVersion = java_version as int
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
+    toolchain.languageVersion = JavaLanguageVersion.of(javaVersion)
+    withSourcesJar()
+}
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+    options.release = javaVersion
 }
 
-compileJava {
-    dependsOn clean
-}
+// ---- ${...} placeholders ----------------------------------------------------------------------
+def placeholderKeys = new Properties()
+file("gradle.properties").withReader("UTF-8") { placeholderKeys.load(it) }
+def placeholders = placeholderKeys.stringPropertyNames()
+        .findAll { it ==~ /[A-Za-z_][A-Za-z0-9_]*/ }
+        .collectEntries { [(it): findProperty(it).toString()] }
+// From 1.21.9 a pack also declares the range of formats it supports, the data side up to data_pack_format
+placeholders.pack_format_fields = minecraftAtLeast("1.21.9")
+        ? "\"pack_format\": ${pack_format},\n    \"supported_formats\": [64, ${data_pack_format}],\n" +
+          "    \"min_format\": 64,\n    \"max_format\": ${data_pack_format}"
+        : "\"pack_format\": ${pack_format}"
 
-configurations {
-    shade {
-        canBeResolved = true
-        canBeConsumed = false
-        extendsFrom implementation
-    }
-}
-
-shadowJar {
-    configurations = [project.configurations.shade]
-    archiveClassifier.set('dev')
-}
-
-
-reobf {
-    shadowJar { }
-}
-
-
-tasks.build {
-    dependsOn 'reobfShadowJar'
-}
-tasks.named('jar') {
-    finalizedBy 'reobfShadowJar'
-}
-
-tasks.processResources {
-    inputs.property 'version', project.version
-    filesMatching('META-INF/mods.toml') {
-        expand(version: project.version)
-    }
+processResources {
+    inputs.properties(placeholders)
+    filesMatching(["META-INF/mods.toml", "pack.mcmeta"]) { expand(placeholders) }
 }

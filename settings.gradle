@@ -1,10 +1,16 @@
 pluginManagement {
     repositories {
-        mavenCentral()
         gradlePluginPortal()
-        maven { url = 'https://maven.minecraftforge.net/' }
-        maven { url = 'https://maven.parchmentmc.org' }
-        maven { url = 'https://jitpack.io' }
+        mavenCentral()
+        maven { name = "Fabric"; url = "https://maven.fabricmc.net/" }
+        maven { name = "Architectury"; url = "https://maven.architectury.dev/" }
+        maven { name = "Forge"; url = "https://maven.minecraftforge.net/" }
     }
 }
-rootProject.name = 'VisorAddonForge'
+
+plugins {
+    // Downloads the JDK that java_version asks for when it is not installed
+    id "org.gradle.toolchains.foojay-resolver-convention" version "1.0.0"
+}
+
+rootProject.name = "VisorAddonForge"

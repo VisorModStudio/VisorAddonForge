@@ -1,0 +1,70 @@
+def compareMinecraft = { String left, String right ->
+    def a = left.tokenize(".")*.toInteger()
+    def b = right.tokenize(".")*.toInteger()
+    (0..<Math.max(a.size(), b.size())).collect { (a[it] ?: 0) <=> (b[it] ?: 0) }.find { it != 0 } ?: 0
+}
+
+// ---- Target switch: useMinecraft-<version> ----------------------------------------------------
+def presets = (file("versions").listFiles() ?: [])
+        .findAll { it.name.endsWith(".properties") }
+        .collectEntries { [(it.name - ".properties"): it] }
+        .sort { x, y -> compareMinecraft(x.key, y.key) }
+def blockStart = "# >>> minecraft target"
+def blockEnd = "# <<< minecraft target"
+
+presets.each { mc, preset ->
+    tasks.register("useMinecraft-${mc}") {
+        group = "minecraft"
+        description = "Writes versions/${mc}.properties into gradle.properties"
+        def properties = file("gradle.properties")
+        def accessWideners = fileTree(projectDir) {
+            include "**/src/main/resources/*.accesswidener"
+            exclude ".gradle", "**/build", "**/run"
+        }
+        doLast {
+            def text = properties.getText("UTF-8")
+            def eol = text.contains("\r\n") ? "\r\n" : "\n"
+            def lines = text.readLines()
+            def start = lines.findIndexOf { it.startsWith(blockStart) }
+            def end = lines.findIndexOf { it.startsWith(blockEnd) }
+            if (start < 0 || end < start) {
+                throw new GradleException("gradle.properties needs a '${blockStart}' line and a '${blockEnd}' line around the target")
+            }
+            properties.write((lines[0..start] + preset.readLines("UTF-8") + lines[end..-1]).join(eol) + eol, "UTF-8")
+
+            // Access wideners name the unobfuscated Minecraft of 26.1+ "official", the remapped one "named"
+            def namespace = mc.startsWith("1.") ? "named" : "official"
+            accessWideners.each { aw ->
+                def awText = aw.getText("UTF-8")
+                def fixed = awText.replaceFirst(/^(accessWidener\s+v\d+\s+)\w+/, "\$1${namespace}")
+                if (fixed != awText) {
+                    aw.write(fixed, "UTF-8")
+                    logger.lifecycle("${projectDir.toPath().relativize(aw.toPath())}: namespace ${namespace}")
+                }
+            }
+            logger.lifecycle("Minecraft target: ${mc}. Reload the Gradle project in the IDE.")
+        }
+    }
+}
+
+// The switch must also work when the current target is broken, so build.gradle skips the rest of the build
+ext.switchingTarget = gradle.startParameter.taskNames.any { it ==~ /:?useMinecraft-.+/ }
+if (switchingTarget) {
+    return
+}
+
+if (presets) {
+    def preset = presets[findProperty("minecraft_version")]
+    if (preset == null) {
+        throw new GradleException("Visor has no build for minecraft_version=${findProperty("minecraft_version")}. " +
+                "Versions: ${presets.keySet().join(", ")}, switch with `gradlew useMinecraft-<version>`. " +
+                "Each one also runs on the versions just below it, e.g. 1.21.8 on 1.21.6 and 1.21.7.")
+    }
+    def keys = new Properties()
+    preset.withReader("UTF-8") { keys.load(it) }
+    def missing = keys.stringPropertyNames().findAll { !project.hasProperty(it) }
+    if (missing) {
+        throw new GradleException("gradle.properties misses ${missing.join(", ")} of versions/${preset.name}, " +
+                "run `gradlew useMinecraft-${minecraft_version}`")
+    }
+}
