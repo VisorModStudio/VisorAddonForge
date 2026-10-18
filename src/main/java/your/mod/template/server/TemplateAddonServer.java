@@ -1,13 +1,13 @@
-package your.mod.example.server;
+package your.mod.template.server;
 
 import org.vmstudio.visor.api.common.addon.VisorAddon;
 
-import your.mod.example.common.VisorExample;
+import your.mod.template.common.VisorTemplate;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ExampleAddonServer implements VisorAddon {
+public class TemplateAddonServer implements VisorAddon {
 
     @Override
     public void onAddonLoad() {
@@ -16,21 +16,21 @@ public class ExampleAddonServer implements VisorAddon {
 
     @Override
     public @Nullable String getAddonPackagePath() {
-        return "your.mod.example.server";
+        return "your.mod.template.server";
     }
 
     @Override
     public @NotNull String getAddonId() {
-        return VisorExample.MOD_ID;
+        return VisorTemplate.MOD_ID;
     }
 
     @Override
     public @NotNull Component getAddonName() {
-        return Component.literal(VisorExample.MOD_NAME);
+        return Component.literal(VisorTemplate.MOD_NAME);
     }
 
     @Override
     public String getModId() {
-        return VisorExample.MOD_ID;
+        return VisorTemplate.MOD_ID;
     }
 }

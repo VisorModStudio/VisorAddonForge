@@ -1,14 +1,14 @@
-package your.mod.example.client;
+package your.mod.template.client;
 
 import org.vmstudio.visor.api.common.addon.VisorAddon;
-import your.mod.example.common.VisorExample;
+import your.mod.template.common.VisorTemplate;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ExampleAddonClient implements VisorAddon {
+public class TemplateAddonClient implements VisorAddon {
 
     @Override
     public void onAddonLoad() {
@@ -16,21 +16,21 @@ public class ExampleAddonClient implements VisorAddon {
 
     @Override
     public @Nullable String getAddonPackagePath() {
-        return "your.mod.example.client";
+        return "your.mod.template.client";
     }
 
     @Override
     public @NotNull String getAddonId() {
-        return VisorExample.MOD_ID;
+        return VisorTemplate.MOD_ID;
     }
 
     @Override
     public @NotNull Component getAddonName() {
-        return Component.literal(VisorExample.MOD_NAME);
+        return Component.literal(VisorTemplate.MOD_NAME);
     }
 
     @Override
     public String getModId() {
-        return VisorExample.MOD_ID;
+        return VisorTemplate.MOD_ID;
     }
 }
